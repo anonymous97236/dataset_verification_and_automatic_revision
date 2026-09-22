@@ -1,0 +1,101 @@
+[
+  {
+    "text": "",
+    "bbox": [
+      21,
+      59,
+      114,
+      102
+    ]
+  },
+  {
+    "text": "FLIGHTS",
+    "bbox": [
+      253,
+      60,
+      576,
+      98
+    ]
+  },
+  {
+    "text": "HOTELS",
+    "bbox": [
+      576,
+      59,
+      988,
+      96
+    ]
+  },
+  {
+    "text": "Rome",
+    "bbox": [
+      16,
+      113,
+      692,
+      149
+    ]
+  },
+  {
+    "text": "Dec 23 Dec 27",
+    "bbox": [
+      694,
+      113,
+      866,
+      149
+    ]
+  },
+  {
+    "text": "3",
+    "bbox": [
+      870,
+      112,
+      972,
+      150
+    ]
+  },
+  {
+    "text": "HotelCapodAfrica Colosseo 4.5 ***** (2,516) 0.22 miles from downtown $149 a night",
+    "bbox": [
+      26,
+      158,
+      973,
+      276
+    ]
+  },
+  {
+    "text": "Hotel Mecenate Palace 4.0 **** (2,085) 0.52 miles from downtown $185 a night Breakfast included",
+    "bbox": [
+      28,
+      292,
+      975,
+      551
+    ]
+  },
+  {
+    "text": "",
+    "bbox": [
+      433,
+      575,
+      573,
+      604
+    ]
+  },
+  {
+    "text": "T SORT & FILTERS",
+    "bbox": [
+      278,
+      888,
+      710,
+      942
+    ]
+  },
+  {
+    "text": "",
+    "bbox": [
+      843,
+      885,
+      963,
+      942
+    ]
+  }
+]

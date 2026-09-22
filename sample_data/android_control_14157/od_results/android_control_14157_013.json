@@ -1,0 +1,110 @@
+[
+  {
+    "text": "",
+    "bbox": [
+      23,
+      59,
+      113,
+      102
+    ]
+  },
+  {
+    "text": "FLIGHTS",
+    "bbox": [
+      245,
+      60,
+      576,
+      98
+    ]
+  },
+  {
+    "text": "HOTELS",
+    "bbox": [
+      576,
+      57,
+      988,
+      96
+    ]
+  },
+  {
+    "text": "Rome",
+    "bbox": [
+      19,
+      113,
+      688,
+      149
+    ]
+  },
+  {
+    "text": "Dec 23 Dec 27",
+    "bbox": [
+      694,
+      113,
+      866,
+      149
+    ]
+  },
+  {
+    "text": "3",
+    "bbox": [
+      870,
+      112,
+      972,
+      150
+    ]
+  },
+  {
+    "text": "",
+    "bbox": [
+      445,
+      169,
+      486,
+      188
+    ]
+  },
+  {
+    "text": "MUNK KOI Rome Villa Gordiani Google Colosseo ESQUILINO",
+    "bbox": [
+      16,
+      217,
+      980,
+      305
+    ]
+  },
+  {
+    "text": "Hotel Napoleon 4.5 O (3,156) 0.55 miles from downtown $150 a night",
+    "bbox": [
+      24,
+      349,
+      974,
+      589
+    ]
+  },
+  {
+    "text": "",
+    "bbox": [
+      437,
+      615,
+      557,
+      634
+    ]
+  },
+  {
+    "text": "T SORT & FILTERS",
+    "bbox": [
+      279,
+      887,
+      719,
+      940
+    ]
+  },
+  {
+    "text": "",
+    "bbox": [
+      840,
+      888,
+      960,
+      942
+    ]
+  }
+]

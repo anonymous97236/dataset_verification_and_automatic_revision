@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="actor-controls" aria-label="Arbiter sample selection">
+    <label><span>Episode</span><select id="episode-select" {% if not initial_view %}disabled{% endif %}></select></label>
+    <label><span>Output ID</span><select id="output-select" {% if not initial_view %}disabled{% endif %}></select></label>
+    <div class="step-control"><span>Step</span><div><select id="step-select" {% if not initial_view %}disabled{% endif %}></select></div></div>
+  </section>
+
+  {% if initial_view %}
+    <div class="input-divider" aria-hidden="true"><span>Input</span></div>
+    <section class="arbiter-view">
+      <div class="arbiter-input-layout">
+        <div class="arbiter-context-column">
+          <button id="view-prompt-button" class="secondary-button full-prompt-button" type="button">View Full Prompt</button>
+          <article class="task-context">
+            <h2>Task Context</h2>
+            <section><h3>Task Goal</h3><p id="task-goal"></p></section>
+            <section><h3>Expected Result</h3><p id="expected-result"></p></section>
+            <section><h3>Previous Action History</h3><p id="previous-action-history"></p></section>
+          </article>
+          <article class="model-decisions-panel">
+            <h2>Model Decisions</h2>
+            <div id="model-decisions" class="model-decisions"></div>
+          </article>
+        </div>
+        <div id="screenshot-grid" class="screenshot-grid" aria-label="Arbiter input screenshots"></div>
+      </div>
+    </section>
+    <section class="run-arbiter-section">
+      <div class="run-divider"><span>Run Arbiter</span></div>
+      <section class="run-arbiter-layout" aria-label="Arbiter execution layout">
+        <div class="arbiter-run-column">
+          {% for arbiter_number, arbiter_role in ((1, 'arbiter1'), (2, 'arbiter2')) %}
+            <article class="arbiter-run-card">
+              <div class="arbiter-run-header">
+                <div class="arbiter-run-title"><h3>Arbiter {{ arbiter_number }}</h3><p id="{{ arbiter_role }}-provider" class="arbiter-provider"></p></div>
+                <button class="arbiter-run-button" data-arbiter-role="{{ arbiter_role }}" type="button">Run</button>
+              </div>
+              <img class="arbiter-character" src="{{ url_for('web_asset', filename='arbiter.png') }}" alt="Arbiter character">
+              <div id="{{ arbiter_role }}-thought" class="arbiter-thought-placeholder" aria-label="Arbiter {{ arbiter_number }} thought"><div class="arbiter-thought-content"></div></div>
+            </article>
+          {% endfor %}
+        </div>
+        <div class="arbiter-action-run-column">
+          <article class="arbiter-action-run-card"><img src="{{ url_for('web_asset', filename='inferred_action1.png') }}" alt="Selected Action 1 icon"><h3>Selected Action 1</h3><span id="arbiter1-reproduction" class="reproduction-status" hidden></span><div id="arbiter1-action-fields" class="action-fields"></div></article>
+          <article class="arbiter-action-run-card"><img src="{{ url_for('web_asset', filename='inferred_action2.png') }}" alt="Selected Action 2 icon"><h3>Selected Action 2</h3><span id="arbiter2-reproduction" class="reproduction-status" hidden></span><div id="arbiter2-action-fields" class="action-fields"></div></article>
+          <article class="arbiter-action-run-card"><img src="{{ url_for('web_asset', filename='reference_action.png') }}" alt="Reference Action icon"><h3>Reference Action</h3><div id="reference-action-fields" class="action-fields"></div></article>
+        </div>
+        <img id="run-current-screenshot" class="run-current-screenshot" alt="Current screenshot with Arbiter selections and reference action">
+      </section>
+    </section>
+  {% else %}
+    <section class="panel"><h2>No Arbiter-eligible output is available.</h2><p>Run both Actors for at least one step in an output snapshot first.</p></section>
+  {% endif %}
+
+  <dialog id="prompt-dialog" class="prompt-dialog" aria-labelledby="prompt-dialog-title">
+    <div class="prompt-dialog-header"><h2 id="prompt-dialog-title">Arbiter Input Prompt</h2><button id="close-prompt-button" class="dialog-close" type="button" aria-label="Close prompt">×</button></div>
+    <p>The following text is sent to the Arbiter together with the two displayed screenshots.</p>
+    <pre id="full-prompt"></pre>
+  </dialog>
+
+  <script>
+    const initialArbiterView = {{ initial_view | tojson }};
+    const episodeSelect = document.getElementById("episode-select");
+    const outputSelect = document.getElementById("output-select");
+    const stepSelect = document.getElementById("step-select");
+    const promptDialog = document.getElementById("prompt-dialog");
+    const fullPrompt = document.getElementById("full-prompt");
+    const arbiterRunButtons = [...document.querySelectorAll(".arbiter-run-button")];
+
+    function displayValue(value) { return value === null || value === undefined || value === "" ? "—" : typeof value === "string" ? value : JSON.stringify(value); }
+    function setOptions(select, items, value) {
+      select.replaceChildren(...items.map((item) => {
+        const option = document.createElement("option"); option.value = String(item.value); option.textContent = item.label;
+        option.selected = String(item.value) === String(value); return option;
+      }));
+    }
+    function renderFields(elementId, fields, emptyMessage) {
+      const element = document.getElementById(elementId); element.replaceChildren();
+      if (!fields.length) { const message = document.createElement("p"); message.className = "action-empty"; message.textContent = emptyMessage; element.append(message); return; }
+      fields.forEach(({name, value}) => {
+        const field = document.createElement("div"); field.className = "action-field";
+        const label = document.createElement("span"); label.textContent = name;
+        const content = document.createElement("p"); content.textContent = displayValue(value);
+        field.append(label, content); element.append(field);
+      });
+    }
+    function renderReproductionStatus(role, status) {
+      const badge = document.getElementById(`${role}-reproduction`); badge.hidden = !status; badge.className = "reproduction-status";
+      if (status) { badge.classList.add(status.result); badge.textContent = status.label; }
+    }
+    function renderModelDecisions(decisions) {
+      const container = document.getElementById("model-decisions"); container.replaceChildren();
+      Object.entries(decisions).forEach(([label, decision]) => {
+        const card = document.createElement("article"); card.className = "model-decision";
+        const title = document.createElement("h3"); title.textContent = label; card.append(title);
+        Object.entries(decision).forEach(([name, value]) => {
+          const field = document.createElement("div"); field.className = "model-decision-field";
+          const fieldName = document.createElement("span"); fieldName.textContent = name;
+          const content = document.createElement("p"); content.textContent = displayValue(value);
+          field.append(fieldName, content); card.append(field);
+        });
+        container.append(card);
+      });
+    }
+    function renderArbiterView(view) {
+      setOptions(episodeSelect, view.episodes.map((episode) => ({value: episode, label: episode})), view.episode_id);
+      setOptions(outputSelect, view.output_ids.map((outputId) => ({value: outputId, label: outputId})), view.output_id);
+      setOptions(stepSelect, view.steps.map((step) => ({value: step.index, label: step.label})), view.step_index);
+      document.getElementById("task-goal").textContent = view.task_goal;
+      document.getElementById("expected-result").textContent = view.expected_result;
+      document.getElementById("previous-action-history").textContent = view.previous_action_history;
+      fullPrompt.textContent = view.prompt; renderModelDecisions(view.model_decisions);
+      document.getElementById("run-current-screenshot").src = view.current_screenshot;
+      ["arbiter1", "arbiter2"].forEach((role) => {
+        const output = view.arbiter_outputs[role], provider = view.arbiter_providers[role];
+        const providerName = provider === "gemini" ? "Gemini" : provider === "qwen" ? "Qwen" : "";
+        document.getElementById(`${role}-provider`).textContent = providerName ? `Provider: ${providerName}` : "";
+        document.querySelector(`#${role}-thought .arbiter-thought-content`).textContent = output.thought || "Run this Arbiter to select an action.";
+        renderFields(`${role}-action-fields`, output.fields, `Run Arbiter ${role === "arbiter1" ? "1" : "2"} to display its selected action.`);
+        renderReproductionStatus(role, view.arbiter_reproduction[role]);
+      });
+      renderFields("reference-action-fields", view.reference_action, "No reference action is available.");
+      const grid = document.getElementById("screenshot-grid");
+      function sizeScreenshotRow() {
+        const images = [...grid.querySelectorAll("img")];
+        if (!images.length || images.some((image) => !image.naturalWidth || !image.naturalHeight)) return;
+        images.forEach((image) => image.style.setProperty("--aspect", image.naturalWidth / image.naturalHeight));
+      }
+      grid.replaceChildren(...view.screenshots.map((screenshot) => {
+        const image = document.createElement("img"); image.src = screenshot.data_url; image.alt = screenshot.label; image.className = "actor-screenshot";
+        image.addEventListener("load", sizeScreenshotRow); return image;
+      }));
+      sizeScreenshotRow();
+    }
+    async function loadArbiterView(episodeId, outputId, stepIndex) {
+      const response = await fetch(`/api/arbiter/view/${encodeURIComponent(episodeId)}/${encodeURIComponent(outputId)}/${stepIndex}`);
+      if (!response.ok) throw new Error((await response.json()).error || "Unable to load the selected output.");
+      renderArbiterView(await response.json());
+    }
+    async function loadEpisode(episodeId) {
+      const response = await fetch(`/api/arbiter/episode/${encodeURIComponent(episodeId)}`);
+      if (!response.ok) throw new Error((await response.json()).error || "Unable to load the selected episode.");
+      renderArbiterView(await response.json());
+    }
+    const waitForArbiterRun = (jobId) => new Promise((resolve, reject) => {
+      const check = async () => { try {
+        const response = await fetch(`/api/arbiter/run/${encodeURIComponent(jobId)}`), payload = await response.json();
+        if (!response.ok || payload.status === "failed") throw new Error(payload.error || "Arbiter request failed.");
+        if (payload.status === "completed") return resolve(payload); window.setTimeout(check, 700);
+      } catch (error) { reject(error); } }; check();
+    });
+    async function runArbiter(role, button) {
+      button.disabled = true; document.querySelector(`#${role}-thought .arbiter-thought-content`).textContent = "Selecting action...";
+      try {
+        const response = await fetch("/api/arbiter/run", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({arbiter_role: role, episode_id: episodeSelect.value, output_id: outputSelect.value, step_index: Number(stepSelect.value), decision_seed: `arbiter:${episodeSelect.value}:${outputSelect.value}:${stepSelect.value}`})});
+        const job = await response.json(); if (!response.ok) throw new Error(job.error || "Unable to start the Arbiter request.");
+        const result = await waitForArbiterRun(job.job_id), view = result.view;
+        if (view.episode_id === episodeSelect.value && view.output_id === outputSelect.value && String(view.step_index) === stepSelect.value) renderArbiterView(view);
+      } catch (error) { document.querySelector(`#${role}-thought .arbiter-thought-content`).textContent = `Request failed: ${error.message}`; }
+      finally { button.disabled = false; }
+    }
+    if (initialArbiterView) {
+      renderArbiterView(initialArbiterView);
+      episodeSelect.addEventListener("change", () => loadEpisode(episodeSelect.value));
+      outputSelect.addEventListener("change", () => loadArbiterView(episodeSelect.value, outputSelect.value, 0));
+      stepSelect.addEventListener("change", () => loadArbiterView(episodeSelect.value, outputSelect.value, Number(stepSelect.value)));
+      document.getElementById("view-prompt-button").addEventListener("click", () => promptDialog.showModal());
+      document.getElementById("close-prompt-button").addEventListener("click", () => promptDialog.close());
+      promptDialog.addEventListener("click", (event) => { if (event.target === promptDialog) promptDialog.close(); });
+      arbiterRunButtons.forEach((button) => button.addEventListener("click", () => runArbiter(button.dataset.arbiterRole, button)));
+    }
+  </script>
+{% endblock %}

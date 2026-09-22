@@ -1,0 +1,101 @@
+[
+  {
+    "text": "Flights",
+    "bbox": [
+      109,
+      172,
+      273,
+      273
+    ]
+  },
+  {
+    "text": "Hotels",
+    "bbox": [
+      419,
+      173,
+      581,
+      273
+    ]
+  },
+  {
+    "text": "Car Rental",
+    "bbox": [
+      701,
+      171,
+      914,
+      274
+    ]
+  },
+  {
+    "text": "Explore everywhere",
+    "bbox": [
+      44,
+      327,
+      392,
+      484
+    ]
+  },
+  {
+    "text": "Hot hotel deals",
+    "bbox": [
+      406,
+      327,
+      755,
+      483
+    ]
+  },
+  {
+    "text": "? Why choos Skyscanne",
+    "bbox": [
+      766,
+      326,
+      997,
+      485
+    ]
+  },
+  {
+    "text": "Where should go in 2024? Stay on-budget but don't compromise on adventure this year.",
+    "bbox": [
+      35,
+      520,
+      964,
+      795
+    ]
+  },
+  {
+    "text": "",
+    "bbox": [
+      39,
+      799,
+      961,
+      911
+    ]
+  },
+  {
+    "text": "Explore",
+    "bbox": [
+      83,
+      913,
+      246,
+      972
+    ]
+  },
+  {
+    "text": "Trips",
+    "bbox": [
+      434,
+      915,
+      564,
+      972
+    ]
+  },
+  {
+    "text": "Profile",
+    "bbox": [
+      767,
+      916,
+      894,
+      970
+    ]
+  }
+]

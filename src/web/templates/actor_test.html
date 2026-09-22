@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="actor-controls" aria-label="Actor sample selection">
+    <label>
+      <span>Episode</span>
+      <select id="episode-select" {% if not initial_view %}disabled{% endif %}></select>
+    </label>
+    <label>
+      <span>Output ID</span>
+      <select id="output-select" {% if not initial_view %}disabled{% endif %}></select>
+    </label>
+    <div class="step-control">
+      <span>Step</span>
+      <div><select id="step-select" {% if not initial_view %}disabled{% endif %}></select></div>
+    </div>
+  </section>
+
+  {% if initial_view %}
+    <div class="input-divider" aria-hidden="true"><span>Input</span></div>
+    <section id="actor-view" class="actor-view">
+      <div class="actor-layout">
+        <div class="actor-context-column">
+          <button id="view-prompt-button" class="secondary-button full-prompt-button" type="button">View Full Prompt</button>
+          <article class="task-context">
+            <h2>Task Context</h2>
+            <section><h3>Task Goal</h3><p id="task-goal"></p></section>
+            <section><h3>Expected Result</h3><p id="expected-result"></p></section>
+            <section><h3>Previous Action History</h3><p id="previous-action-history"></p></section>
+          </article>
+        </div>
+        <div id="screenshot-grid" class="screenshot-grid" aria-label="Actor input screenshots"></div>
+      </div>
+    </section>
+    <section class="run-actor-section">
+      <div class="run-divider"><span>Run Actor</span></div>
+      <section class="run-actor-layout" aria-label="Actor execution layout">
+        <div class="actor-run-column">
+          {% for actor_number, actor_role in ((1, 'actor1'), (2, 'actor2')) %}
+            <article class="actor-run-card">
+              <div class="actor-run-header">
+                <div class="actor-run-title">
+                  <h3>Actor {{ actor_number }}</h3>
+                  <p id="{{ actor_role }}-provider" class="actor-provider"></p>
+                </div>
+                <button class="actor-run-button" data-actor-role="{{ actor_role }}" type="button">Run</button>
+              </div>
+              <img class="actor-character" src="{{ url_for('web_asset', filename='actor.png') }}" alt="Actor character">
+              <div id="{{ actor_role }}-thought" class="actor-thought-placeholder" aria-label="Actor {{ actor_number }} thought"><div class="actor-thought-content"></div></div>
+            </article>
+          {% endfor %}
+        </div>
+        <div class="action-run-column">
+          <article class="action-run-card">
+            <img src="{{ url_for('web_asset', filename='inferred_action1.png') }}" alt="Inferred Action 1 icon">
+            <h3>Inferred Action 1</h3>
+            <span id="actor1-reproduction" class="reproduction-status" hidden></span>
+            <div id="actor1-action-fields" class="action-fields"></div>
+          </article>
+          <article class="action-run-card">
+            <img src="{{ url_for('web_asset', filename='inferred_action2.png') }}" alt="Inferred Action 2 icon">
+            <h3>Inferred Action 2</h3>
+            <span id="actor2-reproduction" class="reproduction-status" hidden></span>
+            <div id="actor2-action-fields" class="action-fields"></div>
+          </article>
+          <article class="action-run-card">
+            <img src="{{ url_for('web_asset', filename='reference_action.png') }}" alt="Reference Action icon">
+            <h3>Reference Action</h3>
+            <div id="reference-action-fields" class="action-fields"></div>
+          </article>
+        </div>
+        <img id="run-current-screenshot" class="run-current-screenshot" alt="Current screenshot">
+      </section>
+    </section>
+  {% else %}
+    <section class="panel"><h2>No sample data is available.</h2><p>Add an episode directory containing <code>data.json</code> under <code>sample_data</code>.</p></section>
+  {% endif %}
+
+  <dialog id="prompt-dialog" class="prompt-dialog" aria-labelledby="prompt-dialog-title">
+    <div class="prompt-dialog-header">
+      <h2 id="prompt-dialog-title">Actor Input Prompt</h2>
+      <button id="close-prompt-button" class="dialog-close" type="button" aria-label="Close prompt">×</button>
+    </div>
+    <p>The following text is sent to the Actor together with the three displayed screenshots.</p>
+    <pre id="full-prompt"></pre>
+  </dialog>
+
+  <script>
+    const initialActorView = {{ initial_view | tojson }};
+    const episodeSelect = document.getElementById("episode-select");
+    const outputSelect = document.getElementById("output-select");
+    const stepSelect = document.getElementById("step-select");
+    const promptDialog = document.getElementById("prompt-dialog");
+    const fullPrompt = document.getElementById("full-prompt");
+    const viewPromptButton = document.getElementById("view-prompt-button");
+    const closePromptButton = document.getElementById("close-prompt-button");
+    const actorRunButtons = [...document.querySelectorAll(".actor-run-button")];
+
+    function displayValue(value) {
+      if (value === null || value === undefined || value === "") return "—";
+      return typeof value === "string" ? value : JSON.stringify(value);
+    }
+
+    function renderFields(elementId, fields, emptyMessage) {
+      const element = document.getElementById(elementId);
+      element.replaceChildren();
+      if (!fields.length) {
+        const message = document.createElement("p");
+        message.className = "action-empty";
+        message.textContent = emptyMessage;
+        element.append(message);
+        return;
+      }
+      fields.forEach(({ name, value }) => {
+        const field = document.createElement("div");
+        field.className = "action-field";
+        const label = document.createElement("span");
+        label.textContent = name;
+        const content = document.createElement("p");
+        content.textContent = displayValue(value);
+        field.append(label, content);
+        element.append(field);
+      });
+    }
+
+    function renderReproductionStatus(actorRole, status) {
+      const badge = document.getElementById(`${actorRole}-reproduction`);
+      badge.hidden = !status;
+      badge.className = "reproduction-status";
+      if (!status) return;
+      badge.classList.add(status.result);
+      badge.textContent = status.label;
+    }
+
+    function renderRunActorData(view) {
+      ["actor1", "actor2"].forEach((actorRole) => {
+        const output = view.actor_outputs[actorRole];
+        const provider = view.actor_providers[actorRole];
+        const providerName = provider === "gemini" ? "Gemini" : provider === "qwen" ? "Qwen" : "";
+        document.getElementById(`${actorRole}-provider`).textContent = providerName ? `Provider: ${providerName}` : "";
+        document.querySelector(`#${actorRole}-thought .actor-thought-content`).textContent = output.thought || "Run this Actor to infer an action.";
+        renderFields(
+          `${actorRole}-action-fields`,
+          output.fields,
+          `Run Actor ${actorRole === "actor1" ? "1" : "2"} to display its inferred action.`
+        );
+        renderReproductionStatus(actorRole, view.actor_reproduction[actorRole]);
+      });
+      renderFields("reference-action-fields", view.reference_action, "No reference action is available.");
+    }
+
+    function setOptions(select, items, value, label) {
+      select.replaceChildren(...items.map((item) => {
+        const option = document.createElement("option");
+        option.value = String(item.value);
+        option.textContent = item.label;
+        option.selected = String(item.value) === String(value);
+        return option;
+      }));
+    }
+
+    function renderActorView(view) {
+      setOptions(episodeSelect, view.episodes.map((episode) => ({ value: episode, label: episode })), view.episode_id);
+      setOptions(outputSelect, view.output_ids.map((outputId) => ({ value: outputId, label: outputId })), view.output_id);
+      setOptions(stepSelect, view.steps.map((step) => ({ value: step.index, label: step.label })), view.step_index);
+      document.getElementById("task-goal").textContent = view.task_goal;
+      document.getElementById("expected-result").textContent = view.expected_result;
+      document.getElementById("previous-action-history").textContent = view.previous_action_history;
+      fullPrompt.textContent = view.prompt;
+      document.getElementById("run-current-screenshot").src = view.current_screenshot;
+      renderRunActorData(view);
+      const grid = document.getElementById("screenshot-grid");
+      function sizeScreenshotRow() {
+        const images = [...grid.querySelectorAll("img")];
+        if (!images.length || images.some((image) => !image.naturalWidth || !image.naturalHeight)) return;
+        images.forEach((image) => {
+          image.style.setProperty("--aspect", image.naturalWidth / image.naturalHeight);
+        });
+      }
+      grid.replaceChildren(...view.screenshots.map((screenshot) => {
+        const image = document.createElement("img");
+        image.src = screenshot.data_url;
+        image.alt = screenshot.label;
+        image.className = "actor-screenshot";
+        image.addEventListener("load", sizeScreenshotRow);
+        return image;
+      }));
+      sizeScreenshotRow();
+    }
+
+    async function loadActorView(episodeId, outputId, stepIndex) {
+      const response = await fetch(`/api/actor/view/${encodeURIComponent(episodeId)}/${encodeURIComponent(outputId)}/${stepIndex}`);
+      if (!response.ok) throw new Error((await response.json()).error || "Unable to load the selected sample.");
+      renderActorView(await response.json());
+    }
+
+    async function loadEpisode(episodeId) {
+      const response = await fetch(`/api/actor/episode/${encodeURIComponent(episodeId)}`);
+      if (!response.ok) throw new Error((await response.json()).error || "Unable to load the selected episode.");
+      renderActorView(await response.json());
+    }
+
+    const waitForActorRun = (jobId) => new Promise((resolve, reject) => {
+      const check = async () => {
+        try {
+          const response = await fetch(`/api/actor/run/${encodeURIComponent(jobId)}`);
+          const payload = await response.json();
+          if (!response.ok || payload.status === "failed") throw new Error(payload.error || "Actor request failed.");
+          if (payload.status === "completed") return resolve(payload);
+          window.setTimeout(check, 700);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      check();
+    });
+
+    async function runActor(actorRole, button) {
+      button.disabled = true;
+      document.querySelector(`#${actorRole}-thought .actor-thought-content`).textContent = "Inferring action...";
+      try {
+        const response = await fetch("/api/actor/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            actor_role: actorRole,
+            episode_id: episodeSelect.value,
+            output_id: outputSelect.value,
+            step_index: Number(stepSelect.value),
+          }),
+        });
+        const job = await response.json();
+        if (!response.ok) throw new Error(job.error || "Unable to start the Actor request.");
+        const result = await waitForActorRun(job.job_id);
+        const view = result.view;
+        if (
+          view.episode_id === episodeSelect.value &&
+          view.output_id === outputSelect.value &&
+          String(view.step_index) === stepSelect.value
+        ) {
+          renderActorView(view);
+        }
+      } catch (error) {
+        document.querySelector(`#${actorRole}-thought .actor-thought-content`).textContent = `Request failed: ${error.message}`;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    if (initialActorView) {
+      renderActorView(initialActorView);
+      episodeSelect.addEventListener("change", () => loadEpisode(episodeSelect.value));
+      outputSelect.addEventListener("change", () => loadActorView(episodeSelect.value, outputSelect.value, 0));
+      stepSelect.addEventListener("change", () => loadActorView(episodeSelect.value, outputSelect.value, stepSelect.value));
+      viewPromptButton.addEventListener("click", () => promptDialog.showModal());
+      closePromptButton.addEventListener("click", () => promptDialog.close());
+      promptDialog.addEventListener("click", (event) => {
+        if (event.target === promptDialog) promptDialog.close();
+      });
+      actorRunButtons.forEach((button) => {
+        button.addEventListener("click", () => runActor(button.dataset.actorRole, button));
+      });
+    }
+  </script>
+{% endblock %}

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Actor–Arbiter–Gatekeeper</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='20260922-7') }}">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <p class="eyebrow">FSE reproducibility materials</p>
+        <h1>Automatic Verification and Revision of Action Annotation in Offline GUI Agent Datasets</h1>
+      </header>
+      <nav class="tabs" aria-label="Pipeline views">
+        {% for slug, label in tabs %}
+          <a href="{{ '/' if slug == 'pipeline' else '/' + slug }}" class="tab{% if slug == active_tab %} active{% endif %}">{{ label }}</a>
+        {% endfor %}
+      </nav>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

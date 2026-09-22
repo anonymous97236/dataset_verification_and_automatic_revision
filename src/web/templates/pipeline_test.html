@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="pipeline-page">
+  <section class="actor-controls" aria-label="Pipeline sample selection">
+    <label><span>Episode</span><select id="episode-select" {% if not initial_view %}disabled{% endif %}></select></label>
+    <label><span>Step</span><select id="step-select" {% if not initial_view %}disabled{% endif %}></select></label>
+    <button id="run-pipeline-button" class="bbox-start-button" type="button" {% if not initial_view %}disabled{% endif %}>Run Pipeline</button>
+  </section>
+  <textarea id="pipeline-message" class="pipeline-message" rows="7" readonly aria-label="Pipeline status log">Each run creates a new output.</textarea>
+  <p id="pipeline-output" class="pipeline-output"></p>
+  <p id="pipeline-error" role="alert" hidden></p>
+  {% if initial_view %}
+    {% for stage, title, action_title in [('actor', 'Actor Stage', 'Inferred Action'), ('arbiter', 'Arbiter Stage', 'Selected Action')] %}
+    <section class="pipeline-stage" aria-label="{{ title }}">
+      <div class="run-divider"><span id="{{ stage }}-stage-title">⚪ {{ title }}</span></div>
+      <section class="run-{{ stage }}-layout">
+        <div class="{{ stage }}-run-column">
+          {% for number in (1, 2) %}
+          <article class="{{ stage }}-run-card">
+            <div class="{{ stage }}-run-header"><div class="{{ stage }}-run-title">
+              <h3>{{ stage | capitalize }} {{ number }}</h3><p id="{{ stage }}{{ number }}-provider" class="{{ stage }}-provider"></p>
+            </div></div>
+            <img class="{{ stage }}-character" src="{{ url_for('web_asset', filename=stage + '.png') }}" alt="{{ stage | capitalize }} character">
+            <div class="{{ stage }}-thought-placeholder"><div id="{{ stage }}{{ number }}-thought" class="{{ stage }}-thought-content"></div></div>
+          </article>
+          {% endfor %}
+        </div>
+        <div class="{{ 'action' if stage == 'actor' else 'arbiter-action' }}-run-column">
+          {% for number in (1, 2) %}
+          <article class="{{ 'action' if stage == 'actor' else 'arbiter-action' }}-run-card">
+            <img src="{{ url_for('web_asset', filename='inferred_action' + number|string + '.png') }}" alt="{{ action_title }} {{ number }} icon">
+            <h3>{{ action_title }} {{ number }}</h3>
+            <span id="{{ stage }}{{ number }}-reproduction" class="reproduction-status" hidden></span>
+            <div id="{{ stage }}{{ number }}-fields" class="action-fields"></div>
+          </article>
+          {% endfor %}
+          <article class="{{ 'action' if stage == 'actor' else 'arbiter-action' }}-run-card">
+            <img src="{{ url_for('web_asset', filename='reference_action.png') }}" alt="Reference Action icon"><h3>Reference Action</h3>
+            <div id="{{ stage }}-reference" class="action-fields"></div>
+          </article>
+        </div>
+        <img id="{{ stage }}-screenshot" class="run-current-screenshot" alt="Current screenshot with {{ stage }} outputs and reference">
+      </section>
+    </section>
+    {% endfor %}
+    <section class="run-gatekeeper-section pipeline-stage" aria-label="Gatekeeper Stage">
+      <div class="run-divider"><span id="gatekeeper-stage-title">⚪ Gatekeeper Stage</span></div>
+      <div class="run-gatekeeper-layout">
+        <article class="gatekeeper-run-card">
+          <div class="gatekeeper-run-header"><div class="gatekeeper-run-title"><h3>Gatekeeper</h3><p id="gatekeeper-provider" class="gatekeeper-provider"></p></div></div>
+          <img class="gatekeeper-character" src="{{ url_for('web_asset', filename='gatekeeper.png') }}" alt="Gatekeeper character">
+          <div class="gatekeeper-thought-placeholder"><div id="gatekeeper-thought" class="gatekeeper-thought-content"></div></div>
+        </article>
+        <div class="gatekeeper-case-images">
+          {% for case in ('A', 'B', 'C') %}
+          <div class="gatekeeper-case-item" data-case="{{ case }}"><div class="gatekeeper-case-frame">
+            <img src="{{ url_for('web_asset', filename='gatekeeper_case_' + case + '.png') }}" alt="Case {{ case }}">
+          </div></div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+    <section class="pipeline-stage" aria-label="Bounding Box Generation">
+      <div class="run-divider"><span id="bbox-stage-title">⚪ Bounding Box Generation</span></div>
+      <div class="bbox-generation-layout pipeline-bbox-layout">
+        <div class="bbox-preview"><img id="bbox-screenshot" alt="Current screenshot with reference action and generated bounding box">
+          <svg id="bbox-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </div>
+        <div class="bbox-work-column">
+          <article class="model-decisions-panel"><h2>Reference Action</h2><div id="bbox-reference" class="model-decisions"></div></article>
+          <p id="bbox-message" class="bbox-generation-status"></p>
+          <article class="model-decisions-panel"><h2>Bounding Box Intents</h2><div id="bbox-intents" class="bbox-intents"></div></article>
+          <article class="bbox-coordinates-panel"><h2>Generated Bounding Box</h2><p id="bbox-coordinates" class="bbox-coordinates">[-, -, -, -]</p><p class="bbox-coordinate-order">[x1, y1, x2, y2]</p></article>
+        </div>
+      </div>
+    </section>
+  {% else %}
+    <section class="panel"><h2>No sample data is available.</h2></section>
+  {% endif %}
+</div>
+<script id="pipeline-initial-data" type="application/json">{{ initial_view | tojson }}</script>
+<script src="{{ url_for('static', filename='pipeline.js', v='20260922-2') }}" defer></script>
+{% endblock %}

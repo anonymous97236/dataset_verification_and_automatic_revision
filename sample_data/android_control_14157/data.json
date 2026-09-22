@@ -1,0 +1,175 @@
+{
+  "episode_id": "android_control_14157",
+  "task_goal": "Look for hotels in Rome, Italy, for 23–27 December 2023 for three people in the Skyscanner app.",
+  "expected_result": "The hotel search results list is displayed with additional options visible after scrolling.\n- The destination 'Rome' is shown in the search bar at the top.\n- The selected dates 'Dec 23 - Dec 27' are displayed in the date selection field.\n- The number of guests '3' is shown in the guests selection field.\n- New hotel listings appear further down the list, indicating successful scroll action.\n- Hotel cards display images, names, ratings, distance from downtown, and nightly prices.\n- A 'SORT & FILTERS' button is visible at the bottom of the screen.",
+  "steps": [
+    {
+      "index": 0,
+      "step_id": "android_control_14157_001",
+      "previous_action_history": "Step 1. On the phone home screen, I launch the Skyscanner.",
+      "operation": "On the Skyscanner main screen, I click the 'Hotels' button to proceed to the hotel search screen.",
+      "original_action_annotation": {
+        "type": "click",
+        "parameter": "(499, 208)",
+        "bbox": "[419, 173, 581, 273]"
+      },
+      "previous_step_id": null
+    },
+    {
+      "index": 1,
+      "step_id": "android_control_14157_002",
+      "previous_action_history": "Step 1. On the phone home screen, I launch the Skyscanner.\nStep 2. On the Skyscanner main screen, I click the 'Hotels' button to proceed to the hotel search screen.",
+      "operation": "On the hotel search screen, I click the destination input field to enter the city name.",
+      "original_action_annotation": {
+        "type": "click",
+        "parameter": "(369, 131)",
+        "bbox": "[28, 112, 692, 150]"
+      },
+      "previous_step_id": "android_control_14157_001"
+    },
+    {
+      "index": 2,
+      "step_id": "android_control_14157_003",
+      "previous_action_history": "Step 1. On the phone home screen, I launch the Skyscanner.\nStep 2. On the Skyscanner main screen, I click the 'Hotels' button to proceed to the hotel search screen.\nStep 3. On the hotel search screen, I click the destination input field to enter the city name.",
+      "operation": "On the hotel search screen, I enter 'Rome' in the 'Destination or hotel name' input field to search for hotels in Rome.",
+      "original_action_annotation": {
+        "type": "type",
+        "parameter": "Rome",
+        "bbox": null
+      },
+      "previous_step_id": "android_control_14157_002"
+    },
+    {
+      "index": 3,
+      "step_id": "android_control_14157_004",
+      "previous_action_history": "Step 1. On the phone home screen, I launch the Skyscanner.\nStep 2. On the Skyscanner main screen, I click the 'Hotels' button to proceed to the hotel search screen.\nStep 3. On the hotel search screen, I click the destination input field to enter the city name.\nStep 4. On the hotel search screen, I enter 'Rome' in the 'Destination or hotel name' input field to search for hotels in Rome.",
+      "operation": "On the search suggestions screen, I click the list item 'Rome, Metropolitan City of Rome, Lazio, Italy' to select the destination city.",
+      "original_action_annotation": {
+        "type": "click",
+        "parameter": "(531, 249)",
+        "bbox": "[0, 225, 1000, 272]"
+      },
+      "previous_step_id": "android_control_14157_003"
+    },
+    {
+      "index": 4,
+      "step_id": "android_control_14157_005",
+      "previous_action_history": "Step 1. On the phone home screen, I launch the Skyscanner.\nStep 2. On the Skyscanner main screen, I click the 'Hotels' button to proceed to the hotel search screen.\nStep 3. On the hotel search screen, I click the destination input field to enter the city name.\nStep 4. On the hotel search screen, I enter 'Rome' in the 'Destination or hotel name' input field to search for hotels in Rome.\nStep 5. On the search suggestions screen, I click the list item 'Rome, Metropolitan City of Rome, Lazio, Italy' to select the destination city.",
+      "operation": "On the hotel search screen, I click the date selection field to open the calendar and select the check-in and check-out dates.",
+      "original_action_annotation": {
+        "type": "click",
+        "parameter": "(733, 131)",
+        "bbox": "[694, 112, 866, 148]"
+      },
+      "previous_step_id": "android_control_14157_004"
+    },
+    {
+      "index": 5,
+      "step_id": "android_control_14157_006",
+      "previous_action_history": "Step 1. On the phone home screen, I launch the Skyscanner.\nStep 2. On the Skyscanner main screen, I click the 'Hotels' button to proceed to the hotel search screen.\nStep 3. On the hotel search screen, I click the destination input field to enter the city name.\nStep 4. On the hotel search screen, I enter 'Rome' in the 'Destination or hotel name' input field to search for hotels in Rome.\nStep 5. On the search suggestions screen, I click the list item 'Rome, Metropolitan City of Rome, Lazio, Italy' to select the destination city.\nStep 6. On the hotel search screen, I click the date selection field to open the calendar and select the check-in and check-out dates.",
+      "operation": "On the date selection screen, I click the date '27' in the December calendar to set the check-out date.",
+      "original_action_annotation": {
+        "type": "click",
+        "parameter": "(500, 559)",
+        "bbox": "[455, 558, 547, 602]"
+      },
+      "previous_step_id": "android_control_14157_005"
+    },
+    {
+      "index": 6,
+      "step_id": "android_control_14157_007",
+      "previous_action_history": "(Summary of Steps 1–7) I opened the Skyscanner app, selected the 'Hotels' option, and specified 'Rome, Italy' as the destination. I then proceeded to the date selection screen and selected December 27th as the check-out date. I am currently finalizing the date range for the 23–27 December 2023 stay.",
+      "operation": "On the date selection screen, I click the date '27' to set the check-out date.",
+      "original_action_annotation": {
+        "type": "click",
+        "parameter": "(500, 559)",
+        "bbox": "[454, 558, 548, 602]"
+      },
+      "previous_step_id": "android_control_14157_006"
+    },
+    {
+      "index": 7,
+      "step_id": "android_control_14157_008",
+      "previous_action_history": "(Summary of Steps 1–7) I opened the Skyscanner app, selected the 'Hotels' option, and specified 'Rome, Italy' as the destination. I then proceeded to the date selection screen and selected December 27th as the check-out date. I am currently finalizing the date range for the 23–27 December 2023 stay.\nStep 8. On the date selection screen, I click the date '27' to set the check-out date.",
+      "operation": "On the date selection screen, I click the 'Apply' button to confirm the selected check-in and check-out dates for the hotel search.",
+      "original_action_annotation": {
+        "type": "click",
+        "parameter": "(873, 190)",
+        "bbox": "[798, 171, 944, 213]"
+      },
+      "previous_step_id": "android_control_14157_007"
+    },
+    {
+      "index": 8,
+      "step_id": "android_control_14157_009",
+      "previous_action_history": "(Summary of Steps 1–7) I opened the Skyscanner app, selected the 'Hotels' option, and specified 'Rome, Italy' as the destination. I then proceeded to the date selection screen and selected December 27th as the check-out date. I am currently finalizing the date range for the 23–27 December 2023 stay.\nStep 8. On the date selection screen, I click the date '27' to set the check-out date.\nStep 9. On the date selection screen, I click the 'Apply' button to confirm the selected check-in and check-out dates for the hotel search.",
+      "operation": "On the hotels search screen, I click the '2' guests icon to modify the number of guests for the search.",
+      "original_action_annotation": {
+        "type": "click",
+        "parameter": "(920, 131)",
+        "bbox": "[870, 112, 972, 150]"
+      },
+      "previous_step_id": "android_control_14157_008"
+    },
+    {
+      "index": 9,
+      "step_id": "android_control_14157_010",
+      "previous_action_history": "(Summary of Steps 1–7) I opened the Skyscanner app, selected the 'Hotels' option, and specified 'Rome, Italy' as the destination. I then proceeded to the date selection screen and selected December 27th as the check-out date. I am currently finalizing the date range for the 23–27 December 2023 stay.\nStep 8. On the date selection screen, I click the date '27' to set the check-out date.\nStep 9. On the date selection screen, I click the 'Apply' button to confirm the selected check-in and check-out dates for the hotel search.\nStep 10. On the hotels search screen, I click the '2' guests icon to modify the number of guests for the search.",
+      "operation": "On the guest selection screen, I click the plus button next to Adults to increase the number of adult guests.",
+      "original_action_annotation": {
+        "type": "click",
+        "parameter": "(879, 311)",
+        "bbox": "[833, 290, 926, 332]"
+      },
+      "previous_step_id": "android_control_14157_009"
+    },
+    {
+      "index": 10,
+      "step_id": "android_control_14157_011",
+      "previous_action_history": "(Summary of Steps 1–11) I opened the Skyscanner app, selected the 'Hotels' option, set Rome, Italy as the destination, and finalized the date range for 23–27 December 2023. I then accessed the guest settings to adjust the number of travelers and successfully increased the adult count to three. I am currently completing the guest configuration step for the hotel search.",
+      "operation": "On the guest configuration screen, I click the 'Apply' button to confirm the selected number of adults.",
+      "original_action_annotation": {
+        "type": "click",
+        "parameter": "(873, 190)",
+        "bbox": "[801, 172, 944, 212]"
+      },
+      "previous_step_id": "android_control_14157_010"
+    },
+    {
+      "index": 11,
+      "step_id": "android_control_14157_012",
+      "previous_action_history": "(Summary of Steps 1–11) I opened the Skyscanner app, selected the 'Hotels' option, set Rome, Italy as the destination, and finalized the date range for 23–27 December 2023. I then accessed the guest settings to adjust the number of travelers and successfully increased the adult count to three. I am currently completing the guest configuration step for the hotel search.\nStep 12. On the guest configuration screen, I click the 'Apply' button to confirm the selected number of adults.",
+      "operation": "On the hotels search screen, I wait for the search results to load.",
+      "original_action_annotation": {
+        "type": "wait",
+        "parameter": "3",
+        "bbox": null
+      },
+      "previous_step_id": "android_control_14157_011"
+    },
+    {
+      "index": 12,
+      "step_id": "android_control_14157_013",
+      "previous_action_history": "(Summary of Steps 1–11) I opened the Skyscanner app, selected the 'Hotels' option, set Rome, Italy as the destination, and finalized the date range for 23–27 December 2023. I then accessed the guest settings to adjust the number of travelers and successfully increased the adult count to three. I am currently completing the guest configuration step for the hotel search.\nStep 12. On the guest configuration screen, I click the 'Apply' button to confirm the selected number of adults.\nStep 13. On the hotels search screen, I wait for the search results to load.",
+      "operation": "On the hotel search results screen, I scroll down the list to view more hotel options.",
+      "original_action_annotation": {
+        "type": "scroll",
+        "parameter": "((500, 936), (500, 239))",
+        "bbox": "[0, 200, 1000, 975]"
+      },
+      "previous_step_id": "android_control_14157_012"
+    },
+    {
+      "index": 13,
+      "step_id": "android_control_14157_014",
+      "previous_action_history": "(Summary of Steps 1–11) I opened the Skyscanner app, selected the 'Hotels' option, set Rome, Italy as the destination, and finalized the date range for 23–27 December 2023. I then accessed the guest settings to adjust the number of travelers and successfully increased the adult count to three. I am currently completing the guest configuration step for the hotel search.\nStep 12. On the guest configuration screen, I click the 'Apply' button to confirm the selected number of adults.\nStep 13. On the hotels search screen, I wait for the search results to load.\nStep 14. On the hotel search results screen, I scroll down the list to view more hotel options.",
+      "operation": "I scrolled down the list to view additional hotel options in Rome, confirming that new results are appearing as expected, so I complete the test.",
+      "original_action_annotation": {
+        "type": "terminate",
+        "parameter": "success",
+        "bbox": null
+      },
+      "previous_step_id": "android_control_14157_013"
+    }
+  ]
+}

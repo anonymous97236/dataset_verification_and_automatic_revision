@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "actor-arbiter-gatekeeper-materials"
+version = "0.1.0"
+description = "Reproducibility materials for the Actor–Arbiter–Gatekeeper GUI action-annotation pipeline"
+requires-python = ">=3.10"
+dependencies = [
+  "Flask>=3.0.0",
+  "google-genai>=1.0.0",
+  "openai>=1.0.0",
+  "Pillow>=10.0.0",
+]
+
+[tool.setuptools]
+packages = ["actor", "arbiter", "gatekeeper", "llm", "utils", "bbox_generator", "prompts", "web", "pipeline"]
+
+[tool.setuptools.package-dir]
+actor = "src/actor"
+arbiter = "src/arbiter"
+gatekeeper = "src/gatekeeper"
+llm = "src/llm"
+utils = "src/utils"
+bbox_generator = "src/bbox_generator"
+prompts = "prompts"
+web = "src/web"
+pipeline = "src/pipeline"
+
+[tool.setuptools.package-data]
+web = ["assets/*.png", "static/*.css", "static/*.js", "templates/*.html"]

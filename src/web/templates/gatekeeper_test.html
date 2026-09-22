@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="actor-controls" aria-label="Gatekeeper sample selection">
+    <label><span>Episode</span><select id="episode-select" {% if not initial_view %}disabled{% endif %}></select></label>
+    <label><span>Output ID</span><select id="output-select" {% if not initial_view %}disabled{% endif %}></select></label>
+    <div class="step-control"><span>Step</span><div><select id="step-select" {% if not initial_view %}disabled{% endif %}></select></div></div>
+  </section>
+  <p id="selection-error" role="alert" hidden></p>
+
+  {% if initial_view %}
+    <div class="input-divider" aria-hidden="true"><span>Input</span></div>
+    <section class="gatekeeper-input-layout" aria-label="Gatekeeper input">
+      <div class="gatekeeper-context-column">
+        <button id="view-prompt-button" class="secondary-button full-prompt-button" type="button">View Full Prompt</button>
+        <article class="task-context">
+          <h2>Task Context</h2>
+          <section><h3>Task Goal</h3><p id="task-goal"></p></section>
+          <section><h3>Expected Result</h3><p id="expected-result"></p></section>
+          <section><h3>Previous Action History</h3><p id="previous-action-history"></p></section>
+        </article>
+        <article class="model-decisions-panel gatekeeper-reference-panel">
+          <h2>Reference Action</h2>
+          <div id="reference-action" class="model-decisions"></div>
+        </article>
+      </div>
+      <div id="screenshot-grid" class="screenshot-grid" aria-label="Gatekeeper input screenshots"></div>
+    </section>
+    <section class="model-decisions-panel gatekeeper-selected-actions" aria-labelledby="arbiter-actions-title">
+      <h2 id="arbiter-actions-title">Arbiter-Selected Actions</h2>
+      <div id="arbiter-actions" class="model-decisions"></div>
+    </section>
+    <section class="run-gatekeeper-section" aria-label="Gatekeeper execution">
+      <div class="run-divider"><span>Run Gatekeeper</span></div>
+      <div class="run-gatekeeper-layout">
+        <article class="gatekeeper-run-card">
+          <div class="gatekeeper-run-header">
+            <div class="gatekeeper-run-title">
+              <h3>Gatekeeper</h3>
+              <p id="gatekeeper-provider" class="gatekeeper-provider"></p>
+            </div>
+            <button id="gatekeeper-run-button" class="gatekeeper-run-button" type="button">Run</button>
+          </div>
+          <img class="gatekeeper-character" src="{{ url_for('web_asset', filename='gatekeeper.png') }}" alt="Gatekeeper character">
+          <div class="gatekeeper-thought-placeholder" aria-label="Gatekeeper thought">
+            <div id="gatekeeper-thought-content" class="gatekeeper-thought-content">Run this Gatekeeper to classify the case.</div>
+          </div>
+        </article>
+        <div class="gatekeeper-case-images" aria-label="Gatekeeper classification cases">
+          {% for case in ('A', 'B', 'C') %}
+            <div class="gatekeeper-case-item" data-case="{{ case }}">
+              <div class="gatekeeper-case-frame">
+                <img src="{{ url_for('web_asset', filename='gatekeeper_case_' + case + '.png') }}" alt="Case {{ case }}">
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <dialog id="prompt-dialog" class="prompt-dialog" aria-labelledby="prompt-dialog-title">
+      <div class="prompt-dialog-header">
+        <h2 id="prompt-dialog-title">Gatekeeper Input Prompt</h2>
+        <button id="close-prompt-button" class="dialog-close" type="button" aria-label="Close prompt">×</button>
+      </div>
+      <p>The following text is supplied to the Gatekeeper together with the two displayed screenshots.</p>
+      <pre id="full-prompt"></pre>
+    </dialog>
+  {% else %}
+    <section class="panel">
+      <h2>No Gatekeeper-eligible output is available.</h2>
+      <p>Select an action in Arbiter Test first. A step is available here when at least one complete Arbiter output does not reproduce the original action annotation.</p>
+    </section>
+  {% endif %}
+
+  <script>
+    const initialGatekeeperView = {{ initial_view | tojson }};
+    const episodeSelect = document.getElementById("episode-select");
+    const outputSelect = document.getElementById("output-select");
+    const stepSelect = document.getElementById("step-select");
+    const selectionError = document.getElementById("selection-error");
+    const promptDialog = document.getElementById("prompt-dialog");
+    const gatekeeperRunButton = document.getElementById("gatekeeper-run-button");
+    const gatekeeperThoughtContent = document.getElementById("gatekeeper-thought-content");
+    let currentView = initialGatekeeperView;
+    let loadSequence = 0;
+
+    function displayValue(value) {
+      return value === null || value === undefined || value === "" ? "—" : typeof value === "string" ? value : JSON.stringify(value);
+    }
+    function setOptions(select, items, selected) {
+      select.replaceChildren(...items.map(({value, label}) => {
+        const option = document.createElement("option");
+        option.value = String(value); option.textContent = label;
+        option.selected = String(value) === String(selected);
+        return option;
+      }));
+    }
+    function renderDecisions(elementId, decisions) {
+      const cards = Object.entries(decisions).map(([label, decision]) => {
+        const card = document.createElement("article"); card.className = "model-decision";
+        if (label) {
+          const title = document.createElement("h3"); title.textContent = label; card.append(title);
+        }
+        const fieldOrder = ["Thought", "Core Criteria", "Action Type", "Action Parameter", "Operation"];
+        fieldOrder.filter(name => Object.prototype.hasOwnProperty.call(decision, name)).forEach(name => {
+          const field = document.createElement("div"); field.className = "model-decision-field";
+          const heading = document.createElement("span"); heading.textContent = name;
+          const content = document.createElement("p"); content.textContent = displayValue(decision[name]);
+          field.append(heading, content); card.append(field);
+        });
+        return card;
+      });
+      document.getElementById(elementId).replaceChildren(...cards);
+    }
+    function renderGatekeeperView(view) {
+      currentView = view;
+      setOptions(episodeSelect, view.episodes.map(value => ({value, label: value})), view.episode_id);
+      setOptions(outputSelect, view.output_ids.map(value => ({value, label: value})), view.output_id);
+      setOptions(stepSelect, view.steps.map(step => ({value: step.index, label: step.label})), view.step_index);
+      document.getElementById("task-goal").textContent = view.task_goal;
+      document.getElementById("expected-result").textContent = view.expected_result;
+      document.getElementById("previous-action-history").textContent = view.previous_action_history;
+      document.getElementById("full-prompt").textContent = view.prompt;
+      const providerName = view.gatekeeper_provider === "gemini" ? "Gemini" : view.gatekeeper_provider === "qwen" ? "Qwen" : "";
+      document.getElementById("gatekeeper-provider").textContent = providerName ? `Provider: ${providerName}` : "";
+      gatekeeperThoughtContent.textContent = view.gatekeeper_thought || "Run this Gatekeeper to classify the case.";
+      const selectedCase = String(view.gatekeeper_case || "").trim().toUpperCase();
+      document.querySelectorAll(".gatekeeper-case-item").forEach(item => {
+        item.classList.toggle("gatekeeper-case-selected", item.dataset.case === selectedCase);
+      });
+      renderDecisions("reference-action", {"": view.reference_action});
+      renderDecisions("arbiter-actions", view.arbiter_actions);
+      const grid = document.getElementById("screenshot-grid");
+      function sizeScreenshotRow() {
+        const images = [...grid.querySelectorAll("img")];
+        if (images.some(image => !image.naturalWidth || !image.naturalHeight)) return;
+        images.forEach(image => image.style.setProperty("--aspect", image.naturalWidth / image.naturalHeight));
+      }
+      grid.replaceChildren(...view.screenshots.map(screenshot => {
+        const image = document.createElement("img"); image.className = "actor-screenshot";
+        image.addEventListener("load", sizeScreenshotRow);
+        image.src = screenshot.data_url; image.alt = screenshot.label;
+        return image;
+      }));
+      sizeScreenshotRow();
+    }
+    async function loadView(url) {
+      const sequence = ++loadSequence;
+      selectionError.hidden = true;
+      document.getElementById("view-prompt-button").disabled = true;
+      try {
+        const response = await fetch(url);
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Unable to load Gatekeeper input.");
+        if (sequence === loadSequence) renderGatekeeperView(payload);
+      } catch (error) {
+        if (sequence === loadSequence) {
+          renderGatekeeperView(currentView);
+          selectionError.textContent = error.message; selectionError.hidden = false;
+        }
+      } finally {
+        if (sequence === loadSequence) document.getElementById("view-prompt-button").disabled = false;
+      }
+    }
+    const waitForGatekeeperRun = (jobId) => new Promise((resolve, reject) => {
+      const check = async () => {
+        try {
+          const response = await fetch(`/api/gatekeeper/run/${encodeURIComponent(jobId)}`);
+          const payload = await response.json();
+          if (!response.ok || payload.status === "failed") throw new Error(payload.error || "Gatekeeper request failed.");
+          if (payload.status === "completed") return resolve(payload);
+          window.setTimeout(check, 700);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      check();
+    });
+    async function runGatekeeper() {
+      gatekeeperRunButton.disabled = true;
+      gatekeeperThoughtContent.textContent = "Classifying the case...";
+      try {
+        const response = await fetch("/api/gatekeeper/run", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            episode_id: episodeSelect.value,
+            output_id: outputSelect.value,
+            step_index: Number(stepSelect.value),
+            decision_seed: `gatekeeper:${episodeSelect.value}:${outputSelect.value}:${stepSelect.value}`,
+          }),
+        });
+        const job = await response.json();
+        if (!response.ok) throw new Error(job.error || "Unable to start the Gatekeeper request.");
+        const result = await waitForGatekeeperRun(job.job_id);
+        const view = result.view;
+        if (view.episode_id === episodeSelect.value && view.output_id === outputSelect.value && String(view.step_index) === stepSelect.value) {
+          renderGatekeeperView(view);
+          if (result.error) gatekeeperThoughtContent.textContent = `No valid case was returned: ${result.error}`;
+        }
+      } catch (error) {
+        gatekeeperThoughtContent.textContent = `Request failed: ${error.message}`;
+      } finally {
+        gatekeeperRunButton.disabled = false;
+      }
+    }
+    if (initialGatekeeperView) {
+      renderGatekeeperView(initialGatekeeperView);
+      episodeSelect.addEventListener("change", () => loadView(`/api/gatekeeper/episode/${encodeURIComponent(episodeSelect.value)}`));
+      outputSelect.addEventListener("change", () => loadView(`/api/gatekeeper/view/${encodeURIComponent(episodeSelect.value)}/${encodeURIComponent(outputSelect.value)}`));
+      stepSelect.addEventListener("change", () => loadView(`/api/gatekeeper/view/${encodeURIComponent(episodeSelect.value)}/${encodeURIComponent(outputSelect.value)}/${stepSelect.value}`));
+      document.getElementById("view-prompt-button").addEventListener("click", () => promptDialog.showModal());
+      document.getElementById("close-prompt-button").addEventListener("click", () => promptDialog.close());
+      promptDialog.addEventListener("click", event => { if (event.target === promptDialog) promptDialog.close(); });
+      gatekeeperRunButton.addEventListener("click", runGatekeeper);
+    }
+  </script>
+{% endblock %}

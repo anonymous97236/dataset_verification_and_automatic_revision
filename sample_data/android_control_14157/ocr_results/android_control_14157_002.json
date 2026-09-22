@@ -1,0 +1,101 @@
+[
+  {
+    "text": "10:27 S",
+    "bbox": [
+      41,
+      16,
+      184,
+      35
+    ]
+  },
+  {
+    "text": "N",
+    "bbox": [
+      253,
+      16,
+      293,
+      35
+    ]
+  },
+  {
+    "text": "FLIGHTS",
+    "bbox": [
+      314,
+      74,
+      451,
+      88
+    ]
+  },
+  {
+    "text": "HOTELS",
+    "bbox": [
+      710,
+      73,
+      844,
+      88
+    ]
+  },
+  {
+    "text": "Destination or hotel name",
+    "bbox": [
+      58,
+      125,
+      459,
+      144
+    ]
+  },
+  {
+    "text": "Dec Dec 21 23",
+    "bbox": [
+      770,
+      120,
+      852,
+      145
+    ]
+  },
+  {
+    "text": "2",
+    "bbox": [
+      934,
+      127,
+      953,
+      138
+    ]
+  },
+  {
+    "text": "Search for a destination or hotel name to see our",
+    "bbox": [
+      171,
+      677,
+      831,
+      692
+    ]
+  },
+  {
+    "text": "Let's get started!",
+    "bbox": [
+      347,
+      645,
+      656,
+      665
+    ]
+  },
+  {
+    "text": "best deals.",
+    "bbox": [
+      427,
+      694,
+      575,
+      711
+    ]
+  },
+  {
+    "text": "SEARCH HOTELS",
+    "bbox": [
+      368,
+      750,
+      636,
+      766
+    ]
+  }
+]

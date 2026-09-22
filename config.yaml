@@ -1,0 +1,8 @@
+# Provider selection for each pipeline role. Valid values: gemini, qwen.
+# Provider connection settings remain in .env; this file contains no secrets.
+actor1: gemini
+actor2: qwen
+arbiter1: gemini
+arbiter2: qwen
+gatekeeper: gemini
+bbox_generator: gemini

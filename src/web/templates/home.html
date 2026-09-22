@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+  {% set labels = {
+    'pipeline': 'End-to-End Pipeline',
+    'actor': 'Actor Test',
+    'arbiter': 'Arbiter Test',
+    'gatekeeper': 'Gatekeeper Test'
+  } %}
+  <section class="panel">
+    <p class="section-label">{{ labels[active_tab] }}</p>
+    <h2>{{ labels[active_tab] }} interface</h2>
+    <p>This page establishes the shared interface and navigation. Its interactive controls will be added with the corresponding pipeline component.</p>
+  </section>
+{% endblock %}

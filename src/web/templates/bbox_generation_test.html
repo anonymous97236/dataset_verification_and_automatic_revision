@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="actor-controls" aria-label="Bounding box generation sample selection">
+    <label><span>Episode</span><select id="episode-select" {% if not initial_view %}disabled{% endif %}></select></label>
+    <label><span>Output ID</span><select id="output-select" {% if not initial_view %}disabled{% endif %}></select></label>
+    <div class="step-control"><span>Step</span><div><select id="step-select" {% if not initial_view %}disabled{% endif %}></select></div></div>
+  </section>
+  <p id="selection-error" role="alert" hidden></p>
+
+  {% if initial_view %}
+    <div class="input-divider" aria-hidden="true"><span>Bounding Box Generation</span></div>
+    <section class="bbox-generation-layout" aria-label="Bounding box generation">
+      <div class="bbox-preview" aria-label="Current screenshot with reference action and generated bounding box">
+        <img id="bbox-screenshot" alt="Current screenshot with reference action parameter">
+        <svg id="bbox-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"></svg>
+      </div>
+      <div class="bbox-work-column">
+        <article class="model-decisions-panel bbox-reference-panel">
+          <h2>Reference Action</h2>
+          <div id="reference-action" class="model-decisions"></div>
+        </article>
+        <div class="bbox-generation-column">
+          <button id="start-generation-button" class="bbox-start-button" type="button">Start Generation</button>
+          <p id="generation-status" class="bbox-generation-status">Ready to generate a bounding box.</p>
+          <article class="model-decisions-panel bbox-intents-panel">
+            <h2>Bounding Box Intents</h2>
+            <div id="bbox-intents" class="bbox-intents"></div>
+          </article>
+          <article class="bbox-coordinates-panel" aria-live="polite">
+            <h2>Generated Bounding Box</h2>
+            <p id="bbox-coordinates" class="bbox-coordinates">[-, -, -, -]</p>
+            <p class="bbox-coordinate-order">[x1, y1, x2, y2]</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  {% else %}
+    <section class="panel">
+      <h2>No bbox-generation-eligible reference action is available.</h2>
+      <p>Run Gatekeeper first. This page accepts only stored reference actions of type click, long_press, scroll, or swipe.</p>
+    </section>
+  {% endif %}
+
+  <script>
+    const initialBBoxView = {{ initial_view | tojson }};
+    const episodeSelect = document.getElementById("episode-select");
+    const outputSelect = document.getElementById("output-select");
+    const stepSelect = document.getElementById("step-select");
+    const selectionError = document.getElementById("selection-error");
+    const startButton = document.getElementById("start-generation-button");
+    const generationStatus = document.getElementById("generation-status");
+    let currentView = initialBBoxView;
+    let loadSequence = 0;
+
+    function displayValue(value) {
+      return value === null || value === undefined || value === "" ? "—" : typeof value === "string" ? value : JSON.stringify(value);
+    }
+    function setOptions(select, items, selected) {
+      select.replaceChildren(...items.map(({value, label}) => {
+        const option = document.createElement("option"); option.value = String(value); option.textContent = label;
+        option.selected = String(value) === String(selected); return option;
+      }));
+    }
+    function renderReferenceAction(reference) {
+      const card = document.createElement("article"); card.className = "model-decision";
+      Object.entries(reference).forEach(([name, value]) => {
+        const field = document.createElement("div"); field.className = "model-decision-field";
+        const label = document.createElement("span"); label.textContent = name;
+        const content = document.createElement("p"); content.textContent = displayValue(value);
+        field.append(label, content); card.append(field);
+      });
+      document.getElementById("reference-action").replaceChildren(card);
+    }
+    function renderIntents(intents = {}, source = null) {
+      const names = source === "od_results" ? ["Target"] : ["Target", "Top", "Bottom", "Left", "Right"];
+      const fields = names.map((name) => {
+        const field = document.createElement("div"); field.className = "bbox-intent-field";
+        const label = document.createElement("span"); label.textContent = name;
+        const content = document.createElement("p"); content.textContent = displayValue(intents[name]);
+        field.append(label, content); return field;
+      });
+      document.getElementById("bbox-intents").replaceChildren(...fields);
+    }
+    function renderBBox(edges = {}, finalBBox = null) {
+      const bbox = finalBBox || [edges.left, edges.top, edges.right, edges.bottom];
+      document.getElementById("bbox-coordinates").textContent = `[${bbox.map(value => value ?? "-").join(", ")}]`;
+      const overlay = document.getElementById("bbox-overlay"); overlay.replaceChildren();
+      const ns = "http://www.w3.org/2000/svg";
+      const line = (x1, y1, x2, y2) => {
+        const element = document.createElementNS(ns, "line");
+        element.setAttribute("x1", x1); element.setAttribute("y1", y1);
+        element.setAttribute("x2", x2); element.setAttribute("y2", y2);
+        element.setAttribute("class", "bbox-guide-line"); overlay.append(element);
+      };
+      if (edges.left !== undefined) line(edges.left, 0, edges.left, 1000);
+      if (edges.right !== undefined) line(edges.right, 0, edges.right, 1000);
+      if (edges.top !== undefined) line(0, edges.top, 1000, edges.top);
+      if (edges.bottom !== undefined) line(0, edges.bottom, 1000, edges.bottom);
+      if (finalBBox && finalBBox.length === 4) {
+        const [x1, y1, x2, y2] = finalBBox;
+        const rectangle = document.createElementNS(ns, "rect");
+        rectangle.setAttribute("x", Math.min(x1, x2)); rectangle.setAttribute("y", Math.min(y1, y2));
+        rectangle.setAttribute("width", Math.abs(x2 - x1)); rectangle.setAttribute("height", Math.abs(y2 - y1));
+        rectangle.setAttribute("class", "bbox-final-rectangle"); overlay.append(rectangle);
+      }
+    }
+    function clearGeneration() {
+      renderIntents(); renderBBox();
+      generationStatus.textContent = "Ready to generate a bounding box.";
+    }
+    function renderBBoxView(view) {
+      currentView = view;
+      setOptions(episodeSelect, view.episodes.map(value => ({value, label: value})), view.episode_id);
+      setOptions(outputSelect, view.output_ids.map(value => ({value, label: value})), view.output_id);
+      setOptions(stepSelect, view.steps.map(step => ({value: step.index, label: step.label})), view.step_index);
+      renderReferenceAction(view.reference_action);
+      document.getElementById("bbox-screenshot").src = view.current_screenshot;
+      if (view.bbox) {
+        renderIntents(view.generation || {}, view.generation_source);
+        renderBBox({left: view.bbox[0], top: view.bbox[1], right: view.bbox[2], bottom: view.bbox[3]}, view.bbox);
+        generationStatus.textContent = "A stored reference bbox is displayed.";
+      } else {
+        clearGeneration();
+      }
+    }
+    async function loadView(url) {
+      const sequence = ++loadSequence;
+      selectionError.hidden = true;
+      try {
+        const response = await fetch(url); const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Unable to load bounding-box generation data.");
+        if (sequence === loadSequence) renderBBoxView(payload);
+      } catch (error) {
+        if (sequence === loadSequence) {
+          selectionError.textContent = error.message; selectionError.hidden = false;
+        }
+      }
+    }
+    const waitForGeneration = (jobId, target) => new Promise((resolve, reject) => {
+      const check = async () => {
+        try {
+          const response = await fetch(`/api/bbox-generation/run/${encodeURIComponent(jobId)}`);
+          const payload = await response.json();
+          if (!response.ok || payload.status === "failed") throw new Error(payload.error || "Bounding-box generation failed.");
+          if (target.episode === episodeSelect.value && target.output === outputSelect.value && target.step === stepSelect.value) {
+            if (Object.keys(payload.intents || {}).length) {
+              renderIntents(payload.intents);
+              generationStatus.textContent = "Generating the four bounding-box edges in parallel...";
+            }
+            if (Object.keys(payload.edges || {}).length && payload.status !== "completed") {
+              generationStatus.textContent = `Generated ${Object.keys(payload.edges).length} of 4 bounding-box edges...`;
+            }
+            renderBBox(payload.edges || {}, payload.status === "completed" ? payload.bbox : null);
+          }
+          if (payload.status === "completed") return resolve(payload);
+          window.setTimeout(check, 300);
+        } catch (error) { reject(error); }
+      };
+      check();
+    });
+    async function startGeneration() {
+      const target = {episode: episodeSelect.value, output: outputSelect.value, step: stepSelect.value};
+      startButton.disabled = true; clearGeneration();
+      generationStatus.textContent = "Generating the bounding-box intent...";
+      try {
+        const response = await fetch("/api/bbox-generation/run", {
+          method: "POST", headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({episode_id: target.episode, output_id: target.output, step_index: Number(target.step)}),
+        });
+        const job = await response.json();
+        if (!response.ok) throw new Error(job.error || "Unable to start bounding-box generation.");
+        const result = await waitForGeneration(job.job_id, target);
+        if (target.episode === episodeSelect.value && target.output === outputSelect.value && target.step === stepSelect.value) {
+          if (result.source === "od_results") generationStatus.textContent = "Bounding box selected from OD results.";
+          else generationStatus.textContent = "Bounding box generation completed.";
+          const finalEdges = result.source === "od_results"
+            ? {left: result.bbox[0], top: result.bbox[1], right: result.bbox[2], bottom: result.bbox[3]}
+            : (result.edges || {});
+          const finalIntents = result.source === "od_results"
+            ? (result.view?.generation || {})
+            : (result.intents || {});
+          renderIntents(finalIntents, result.source); renderBBox(finalEdges, result.bbox);
+        }
+      } catch (error) {
+        generationStatus.textContent = `Generation failed: ${error.message}`;
+      } finally {
+        startButton.disabled = false;
+      }
+    }
+    if (initialBBoxView) {
+      renderBBoxView(initialBBoxView);
+      episodeSelect.addEventListener("change", () => loadView(`/api/bbox-generation/episode/${encodeURIComponent(episodeSelect.value)}`));
+      outputSelect.addEventListener("change", () => loadView(`/api/bbox-generation/view/${encodeURIComponent(episodeSelect.value)}/${encodeURIComponent(outputSelect.value)}/0`));
+      stepSelect.addEventListener("change", () => loadView(`/api/bbox-generation/view/${encodeURIComponent(episodeSelect.value)}/${encodeURIComponent(outputSelect.value)}/${stepSelect.value}`));
+      startButton.addEventListener("click", startGeneration);
+    }
+  </script>
+{% endblock %}
