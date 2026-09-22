@@ -1,9 +1,5 @@
 # Automatic Verification and Revision of Action Annotation in Offline GUI Agent Datasets
 
-![Actor Stage](./assets/actor_stage.png)
-![Arbiter Stage](./assets/arbiter_stage.png)
-![Gatekeeper Stage](./assets/gatekeeper_stage.png)
-
 These are the reproducibility materials for a paper submitted to FSE 2027. You can test the Actor, Arbiter, Gatekeeper, and bounding-box generation stages individually, or test the fully automated end-to-end pipeline.
 
 These reproducibility materials provide a web-based GUI for testing the pipeline on individual steps.
@@ -38,6 +34,10 @@ bash start_web.sh
 
 - After launching the web interface, click the Run Pipeline button in the End-to-End Pipeline tab to run the full pipeline.
 - Each module's Test tab lets you inspect its input and output structure in detail. Click the individual Run button in the block featuring the corresponding character.
+
+![Actor Stage](./assets/actor_stage.png)
+![Arbiter Stage](./assets/arbiter_stage.png)
+![Gatekeeper Stage](./assets/gatekeeper_stage.png)
 
 ### Sample Data
 
