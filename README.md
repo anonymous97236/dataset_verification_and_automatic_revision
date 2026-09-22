@@ -1,10 +1,8 @@
 # Automatic Verification and Revision of Action Annotation in Offline GUI Agent Datasets
 
-<p align="center">
-  <img src="./assets/actor_stage.png" width="30%">
-  <img src="./assets/arbiter_stage.png" width="30%">
-  <img src="./assets/gatekeeper_stage.png" width="30%">
-</p>
+![Actor Stage](./assets/actor_stage.png)
+![Arbiter Stage](./assets/arbiter_stage.png)
+![Gatekeeper Stage](./assets/gatekeeper_stage.png)
 
 These are the reproducibility materials for a paper submitted to FSE 2027. You can test the Actor, Arbiter, Gatekeeper, and bounding-box generation stages individually, or test the fully automated end-to-end pipeline.
 
